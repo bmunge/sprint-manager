@@ -25,7 +25,8 @@ let package = Package(
             dependencies: [
                 "SprintManagerKit",
                 .product(name: "GRDB", package: "GRDB.swift"),
-            ]
+            ],
+            resources: [.process("Resources")]
         ),
         .executableTarget(
             name: "SprintManagerMCP",

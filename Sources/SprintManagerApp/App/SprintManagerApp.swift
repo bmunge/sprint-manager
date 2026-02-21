@@ -19,6 +19,12 @@ struct SprintManagerApp: App {
         NSApplication.shared.setActivationPolicy(.regular)
         NSApplication.shared.activate(ignoringOtherApps: true)
 
+        // Set the app icon from bundled resource
+        if let iconURL = Bundle.module.url(forResource: "AppIcon", withExtension: "icns"),
+           let icon = NSImage(contentsOf: iconURL) {
+            NSApplication.shared.applicationIconImage = icon
+        }
+
         // Listen for cross-process writes (e.g. from MCP server) and tell
         // GRDB to re-check the database so ValueObservations refresh.
         let pool = dbPool
