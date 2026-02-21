@@ -4,7 +4,7 @@ import GRDB
 import SprintManagerKit
 
 @main
-struct SprintManagerApp: App {
+struct StrideApp: App {
     let dbPool: DatabasePool
 
     init() {
@@ -36,7 +36,7 @@ struct SprintManagerApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup("Stride") {
             ContentView()
                 .environment(\.database, dbPool)
                 .frame(minWidth: 800, minHeight: 600)

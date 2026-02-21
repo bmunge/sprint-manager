@@ -3,10 +3,16 @@ import SprintManagerKit
 
 struct NewStorySheet: View {
     let columnId: Int64
+    let sprintId: Int64?
     @Environment(\.dismiss) var dismiss
     @Environment(\.database) private var database
     @State private var storyTitle = ""
     @State private var storyDescription = ""
+
+    init(columnId: Int64, sprintId: Int64? = nil) {
+        self.columnId = columnId
+        self.sprintId = sprintId
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -42,7 +48,8 @@ struct NewStorySheet: View {
                 db: db,
                 columnId: columnId,
                 title: trimmedTitle,
-                description: trimmedDescription.isEmpty ? nil : trimmedDescription
+                description: trimmedDescription.isEmpty ? nil : trimmedDescription,
+                sprintId: sprintId
             )
         }
         dismiss()

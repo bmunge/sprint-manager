@@ -27,6 +27,7 @@ func jsonEncoder() -> JSONEncoder {
 private let writingTools: Set<String> = [
     "create_board", "delete_board", "create_column",
     "create_story", "update_story", "move_story", "delete_story",
+    "create_sprint", "start_sprint", "complete_sprint", "assign_story_to_sprint",
 ]
 
 func handleToolCall(params: CallTool.Parameters, db: DatabaseQueue) throws -> CallTool.Result {
@@ -52,6 +53,16 @@ func handleToolCall(params: CallTool.Parameters, db: DatabaseQueue) throws -> Ca
         result = try StoryTools.moveStory(arguments: params.arguments, db: db)
     case "delete_story":
         result = try StoryTools.deleteStory(arguments: params.arguments, db: db)
+    case "list_sprints":
+        result = try SprintTools.listSprints(arguments: params.arguments, db: db)
+    case "create_sprint":
+        result = try SprintTools.createSprint(arguments: params.arguments, db: db)
+    case "start_sprint":
+        result = try SprintTools.startSprint(arguments: params.arguments, db: db)
+    case "complete_sprint":
+        result = try SprintTools.completeSprint(arguments: params.arguments, db: db)
+    case "assign_story_to_sprint":
+        result = try StoryTools.assignToSprint(arguments: params.arguments, db: db)
     default:
         return .init(content: [.text("Unknown tool: \(params.name)")], isError: true)
     }

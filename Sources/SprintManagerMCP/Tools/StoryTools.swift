@@ -38,9 +38,10 @@ enum StoryTools {
             return .init(content: [.text("Missing required parameter: title")], isError: true)
         }
         let description = arguments?["description"]?.stringValue
+        let sprintId = arguments?["sprintId"]?.int64Value
 
         let story = try db.write { db in
-            try StoryQueries.create(db: db, columnId: columnId, title: title, description: description)
+            try StoryQueries.create(db: db, columnId: columnId, title: title, description: description, sprintId: sprintId)
         }
         let json = try jsonEncoder().encode(story)
         return .init(content: [.text(String(data: json, encoding: .utf8)!)])
@@ -90,5 +91,18 @@ enum StoryTools {
         } else {
             return .init(content: [.text("Story \(storyId) not found")], isError: true)
         }
+    }
+
+    static func assignToSprint(arguments: [String: Value]?, db: DatabaseQueue) throws -> CallTool.Result {
+        guard let storyId = arguments?["storyId"]?.int64Value else {
+            return .init(content: [.text("Missing required parameter: storyId")], isError: true)
+        }
+        let sprintId = arguments?["sprintId"]?.int64Value
+
+        let story = try db.write { db in
+            try StoryQueries.assignToSprint(db: db, storyId: storyId, sprintId: sprintId)
+        }
+        let json = try jsonEncoder().encode(story)
+        return .init(content: [.text(String(data: json, encoding: .utf8)!)])
     }
 }

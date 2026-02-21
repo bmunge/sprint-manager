@@ -14,5 +14,6 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .navigationTitle("Stride")
     }
 }

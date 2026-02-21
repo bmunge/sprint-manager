@@ -20,11 +20,31 @@ public enum StoryQueries {
             .fetchAll(db)
     }
 
+    public static func fetchForSprint(db: Database, sprintId: Int64) throws -> [Story] {
+        try Story
+            .filter(Story.Columns.sprintId == sprintId)
+            .order(Story.Columns.boardColumnId, Story.Columns.position)
+            .fetchAll(db)
+    }
+
+    public static func fetchBacklog(db: Database, boardId: Int64) throws -> [Story] {
+        let columns = try BoardColumn
+            .filter(BoardColumn.Columns.boardId == boardId)
+            .fetchAll(db)
+        let columnIds = columns.compactMap { $0.id }
+        return try Story
+            .filter(columnIds.contains(Story.Columns.boardColumnId))
+            .filter(Story.Columns.sprintId == nil)
+            .order(Story.Columns.boardColumnId, Story.Columns.position)
+            .fetchAll(db)
+    }
+
     public static func create(
         db: Database,
         columnId: Int64,
         title: String,
-        description: String?
+        description: String?,
+        sprintId: Int64? = nil
     ) throws -> Story {
         let maxPosition = try Story
             .filter(Story.Columns.boardColumnId == columnId)
@@ -35,9 +55,24 @@ public enum StoryQueries {
             boardColumnId: columnId,
             title: title,
             description: description,
-            position: maxPosition + 1
+            position: maxPosition + 1,
+            sprintId: sprintId
         )
         try story.insert(db)
+        return story
+    }
+
+    public static func assignToSprint(
+        db: Database,
+        storyId: Int64,
+        sprintId: Int64?
+    ) throws -> Story {
+        guard var story = try Story.fetchOne(db, key: storyId) else {
+            throw DatabaseError(message: "Story not found: \(storyId)")
+        }
+        story.sprintId = sprintId
+        story.updatedAt = Date()
+        try story.update(db)
         return story
     }
 

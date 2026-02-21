@@ -7,6 +7,7 @@ public struct Story: Codable, Identifiable, Equatable {
     public var title: String
     public var description: String?
     public var position: Int
+    public var sprintId: Int64?
     public var createdAt: Date
     public var updatedAt: Date
 
@@ -16,6 +17,7 @@ public struct Story: Codable, Identifiable, Equatable {
         title: String,
         description: String? = nil,
         position: Int,
+        sprintId: Int64? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -24,6 +26,7 @@ public struct Story: Codable, Identifiable, Equatable {
         self.title = title
         self.description = description
         self.position = position
+        self.sprintId = sprintId
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -33,6 +36,7 @@ extension Story: FetchableRecord, MutablePersistableRecord {
     public static let databaseTableName = "story"
 
     public static let boardColumn = belongsTo(BoardColumn.self)
+    public static let sprint = belongsTo(Sprint.self)
 
     public enum Columns {
         static let id = Column(CodingKeys.id)
@@ -40,6 +44,7 @@ extension Story: FetchableRecord, MutablePersistableRecord {
         static let title = Column(CodingKeys.title)
         static let description = Column(CodingKeys.description)
         static let position = Column(CodingKeys.position)
+        static let sprintId = Column(CodingKeys.sprintId)
         static let createdAt = Column(CodingKeys.createdAt)
         static let updatedAt = Column(CodingKeys.updatedAt)
     }

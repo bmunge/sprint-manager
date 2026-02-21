@@ -21,11 +21,12 @@ let package = Package(
             ]
         ),
         .executableTarget(
-            name: "SprintManagerApp",
+            name: "StrideApp",
             dependencies: [
                 "SprintManagerKit",
                 .product(name: "GRDB", package: "GRDB.swift"),
             ],
+            path: "Sources/StrideApp",
             resources: [.process("Resources")]
         ),
         .executableTarget(

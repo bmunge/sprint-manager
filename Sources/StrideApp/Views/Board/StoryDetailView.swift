@@ -7,6 +7,7 @@ struct StoryDetailView: View {
     @Environment(\.database) private var database
     @State private var title: String
     @State private var description: String
+    @State private var showingDeleteAlert = false
 
     init(story: Story) {
         self.story = story
@@ -27,7 +28,7 @@ struct StoryDetailView: View {
                 .border(Color(.separatorColor))
 
             HStack {
-                Button("Delete", role: .destructive) { deleteStory() }
+                Button("Delete", role: .destructive) { showingDeleteAlert = true }
                 Spacer()
                 Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -38,6 +39,12 @@ struct StoryDetailView: View {
         }
         .padding()
         .frame(width: 400, height: 300)
+        .alert("Delete Story", isPresented: $showingDeleteAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) { deleteStory() }
+        } message: {
+            Text("Are you sure you want to delete \"\(story.title)\"? This cannot be undone.")
+        }
     }
 
     private func saveStory() {

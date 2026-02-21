@@ -268,6 +268,136 @@ struct SprintManagerKitTests {
         }
     }
 
+    // MARK: - Sprint Tests
+
+    @Test func createSprint() throws {
+        let dbQueue = try makeDatabase()
+        try dbQueue.write { db in
+            let board = try BoardQueries.create(db: db, name: "Board")
+            let sprint = try SprintQueries.create(db: db, boardId: board.id!, name: "Sprint 1", goal: "Ship it")
+            #expect(sprint.id != nil)
+            #expect(sprint.name == "Sprint 1")
+            #expect(sprint.goal == "Ship it")
+            #expect(sprint.isActive == false)
+            #expect(sprint.boardId == board.id)
+        }
+    }
+
+    @Test func fetchSprintsForBoard() throws {
+        let dbQueue = try makeDatabase()
+        try dbQueue.write { db in
+            let board = try BoardQueries.create(db: db, name: "Board")
+            _ = try SprintQueries.create(db: db, boardId: board.id!, name: "Sprint 1")
+            _ = try SprintQueries.create(db: db, boardId: board.id!, name: "Sprint 2")
+            let sprints = try SprintQueries.fetchForBoard(db: db, boardId: board.id!)
+            #expect(sprints.count == 2)
+        }
+    }
+
+    @Test func onlyOneActiveSprintPerBoard() throws {
+        let dbQueue = try makeDatabase()
+        try dbQueue.write { db in
+            let board = try BoardQueries.create(db: db, name: "Board")
+            let s1 = try SprintQueries.create(db: db, boardId: board.id!, name: "Sprint 1")
+            let s2 = try SprintQueries.create(db: db, boardId: board.id!, name: "Sprint 2")
+
+            _ = try SprintQueries.start(db: db, sprintId: s1.id!)
+            var active = try SprintQueries.fetchActive(db: db, boardId: board.id!)
+            #expect(active?.id == s1.id)
+
+            // Starting s2 should deactivate s1
+            _ = try SprintQueries.start(db: db, sprintId: s2.id!)
+            active = try SprintQueries.fetchActive(db: db, boardId: board.id!)
+            #expect(active?.id == s2.id)
+
+            // s1 should no longer be active
+            let s1Refreshed = try Sprint.fetchOne(db, key: s1.id!)
+            #expect(s1Refreshed?.isActive == false)
+        }
+    }
+
+    @Test func completeSprintMovesIncompleteStoriesToBacklog() throws {
+        let dbQueue = try makeDatabase()
+        try dbQueue.write { db in
+            let board = try BoardQueries.create(db: db, name: "Board")
+            let columns = try ColumnQueries.fetchForBoard(db: db, boardId: board.id!)
+            let todoId = columns[0].id! // To Do
+            let doneId = columns[3].id! // Done
+
+            let sprint = try SprintQueries.create(db: db, boardId: board.id!, name: "Sprint 1")
+            _ = try SprintQueries.start(db: db, sprintId: sprint.id!)
+
+            // Create stories in the sprint
+            let incomplete = try StoryQueries.create(db: db, columnId: todoId, title: "Not Done", description: nil, sprintId: sprint.id!)
+            let complete = try StoryQueries.create(db: db, columnId: doneId, title: "Done", description: nil, sprintId: sprint.id!)
+
+            _ = try SprintQueries.complete(db: db, sprintId: sprint.id!)
+
+            // Incomplete story should be back in backlog (sprintId nil)
+            let incompleteRefreshed = try Story.fetchOne(db, key: incomplete.id!)
+            #expect(incompleteRefreshed?.sprintId == nil)
+
+            // Complete story should keep its sprintId
+            let completeRefreshed = try Story.fetchOne(db, key: complete.id!)
+            #expect(completeRefreshed?.sprintId == sprint.id)
+        }
+    }
+
+    @Test func deleteSprintSetsStoriesBackToBacklog() throws {
+        let dbQueue = try makeDatabase()
+        try dbQueue.write { db in
+            let board = try BoardQueries.create(db: db, name: "Board")
+            let columns = try ColumnQueries.fetchForBoard(db: db, boardId: board.id!)
+            let columnId = columns[0].id!
+
+            let sprint = try SprintQueries.create(db: db, boardId: board.id!, name: "Sprint 1")
+            let story = try StoryQueries.create(db: db, columnId: columnId, title: "Story", description: nil, sprintId: sprint.id!)
+
+            _ = try SprintQueries.delete(db: db, id: sprint.id!)
+
+            let refreshed = try Story.fetchOne(db, key: story.id!)
+            #expect(refreshed?.sprintId == nil)
+        }
+    }
+
+    @Test func assignStoryToSprint() throws {
+        let dbQueue = try makeDatabase()
+        try dbQueue.write { db in
+            let board = try BoardQueries.create(db: db, name: "Board")
+            let columns = try ColumnQueries.fetchForBoard(db: db, boardId: board.id!)
+            let columnId = columns[0].id!
+
+            let sprint = try SprintQueries.create(db: db, boardId: board.id!, name: "Sprint 1")
+            let story = try StoryQueries.create(db: db, columnId: columnId, title: "Story", description: nil)
+            #expect(story.sprintId == nil)
+
+            let assigned = try StoryQueries.assignToSprint(db: db, storyId: story.id!, sprintId: sprint.id!)
+            #expect(assigned.sprintId == sprint.id)
+
+            // Unassign from sprint
+            let unassigned = try StoryQueries.assignToSprint(db: db, storyId: story.id!, sprintId: nil)
+            #expect(unassigned.sprintId == nil)
+        }
+    }
+
+    @Test func fetchBacklog() throws {
+        let dbQueue = try makeDatabase()
+        try dbQueue.write { db in
+            let board = try BoardQueries.create(db: db, name: "Board")
+            let columns = try ColumnQueries.fetchForBoard(db: db, boardId: board.id!)
+            let columnId = columns[0].id!
+
+            let sprint = try SprintQueries.create(db: db, boardId: board.id!, name: "Sprint 1")
+            _ = try StoryQueries.create(db: db, columnId: columnId, title: "In Sprint", description: nil, sprintId: sprint.id!)
+            _ = try StoryQueries.create(db: db, columnId: columnId, title: "Backlog 1", description: nil)
+            _ = try StoryQueries.create(db: db, columnId: columnId, title: "Backlog 2", description: nil)
+
+            let backlog = try StoryQueries.fetchBacklog(db: db, boardId: board.id!)
+            #expect(backlog.count == 2)
+            #expect(backlog.allSatisfy { $0.sprintId == nil })
+        }
+    }
+
     @Test func moveStoryWithinSameColumnNoOp() throws {
         let dbQueue = try makeDatabase()
         try dbQueue.write { db in

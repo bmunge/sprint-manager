@@ -104,6 +104,10 @@ enum MCPToolRegistry {
                     "description": .object([
                         "type": .string("string"),
                         "description": .string("Story description (optional)")
+                    ]),
+                    "sprintId": .object([
+                        "type": .string("integer"),
+                        "description": .string("ID of the sprint to assign to (optional)")
                     ])
                 ]),
                 "required": .array([.string("columnId"), .string("title")])
@@ -162,6 +166,88 @@ enum MCPToolRegistry {
                     "storyId": .object([
                         "type": .string("integer"),
                         "description": .string("ID of the story to delete")
+                    ])
+                ]),
+                "required": .array([.string("storyId")])
+            ])
+        ),
+        Tool(
+            name: "list_sprints",
+            description: "List all sprints for a board",
+            inputSchema: .object([
+                "type": .string("object"),
+                "properties": .object([
+                    "boardId": .object([
+                        "type": .string("integer"),
+                        "description": .string("ID of the board")
+                    ])
+                ]),
+                "required": .array([.string("boardId")])
+            ])
+        ),
+        Tool(
+            name: "create_sprint",
+            description: "Create a new sprint for a board (inactive by default)",
+            inputSchema: .object([
+                "type": .string("object"),
+                "properties": .object([
+                    "boardId": .object([
+                        "type": .string("integer"),
+                        "description": .string("ID of the board")
+                    ]),
+                    "name": .object([
+                        "type": .string("string"),
+                        "description": .string("Sprint name")
+                    ]),
+                    "goal": .object([
+                        "type": .string("string"),
+                        "description": .string("Sprint goal (optional)")
+                    ])
+                ]),
+                "required": .array([.string("boardId"), .string("name")])
+            ])
+        ),
+        Tool(
+            name: "start_sprint",
+            description: "Activate a sprint (deactivates any other active sprint on the same board)",
+            inputSchema: .object([
+                "type": .string("object"),
+                "properties": .object([
+                    "sprintId": .object([
+                        "type": .string("integer"),
+                        "description": .string("ID of the sprint to start")
+                    ])
+                ]),
+                "required": .array([.string("sprintId")])
+            ])
+        ),
+        Tool(
+            name: "complete_sprint",
+            description: "Complete a sprint. Incomplete stories are moved back to backlog.",
+            inputSchema: .object([
+                "type": .string("object"),
+                "properties": .object([
+                    "sprintId": .object([
+                        "type": .string("integer"),
+                        "description": .string("ID of the sprint to complete")
+                    ])
+                ]),
+                "required": .array([.string("sprintId")])
+            ])
+        ),
+        Tool(
+            name: "assign_story_to_sprint",
+            description: "Assign a story to a sprint, or remove from sprint (set to backlog)",
+            inputSchema: .object([
+                "type": .string("object"),
+                "properties": .object([
+                    "storyId": .object([
+                        "type": .string("integer"),
+                        "description": .string("ID of the story")
+                    ]),
+                    "sprintId": .object([
+                        "type": .string("integer"),
+                        "description": .string("ID of the sprint (omit or null to move to backlog)")
                     ])
                 ]),
                 "required": .array([.string("storyId")])

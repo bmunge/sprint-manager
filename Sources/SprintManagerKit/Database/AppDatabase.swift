@@ -32,6 +32,25 @@ public enum AppDatabase {
             }
         }
 
+        migrator.registerMigration("v2") { db in
+            try db.create(table: "sprint") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("boardId", .integer).notNull()
+                    .references("board", onDelete: .cascade)
+                t.column("name", .text).notNull()
+                t.column("goal", .text)
+                t.column("startDate", .datetime)
+                t.column("endDate", .datetime)
+                t.column("isActive", .boolean).notNull().defaults(to: false)
+                t.column("createdAt", .datetime).notNull().defaults(sql: "CURRENT_TIMESTAMP")
+            }
+
+            try db.alter(table: "story") { t in
+                t.add(column: "sprintId", .integer)
+                    .references("sprint", onDelete: .setNull)
+            }
+        }
+
         return migrator
     }
 
