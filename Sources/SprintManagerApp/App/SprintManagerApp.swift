@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import GRDB
 import SprintManagerKit
 
@@ -11,6 +12,20 @@ struct SprintManagerApp: App {
             dbPool = try AppDatabase.makeDatabasePool(at: DatabasePath.databasePath)
         } catch {
             fatalError("Database setup failed: \(error)")
+        }
+
+        // SPM executables aren't .app bundles, so macOS won't activate them.
+        // This forces Dock presence, menu bar, and key focus.
+        NSApplication.shared.setActivationPolicy(.regular)
+        NSApplication.shared.activate(ignoringOtherApps: true)
+
+        // Listen for cross-process writes (e.g. from MCP server) and tell
+        // GRDB to re-check the database so ValueObservations refresh.
+        let pool = dbPool
+        CrossProcessNotifier.startObserving {
+            try? pool.write { db in
+                try db.notifyChanges(in: .fullDatabase)
+            }
         }
     }
 

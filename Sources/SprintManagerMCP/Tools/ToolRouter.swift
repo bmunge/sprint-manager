@@ -23,29 +23,42 @@ func jsonEncoder() -> JSONEncoder {
     return encoder
 }
 
+/// Tools that mutate the database — post a Darwin notification so the app refreshes.
+private let writingTools: Set<String> = [
+    "create_board", "delete_board", "create_column",
+    "create_story", "update_story", "move_story", "delete_story",
+]
+
 func handleToolCall(params: CallTool.Parameters, db: DatabaseQueue) throws -> CallTool.Result {
+    let result: CallTool.Result
     switch params.name {
     case "list_boards":
-        return try BoardTools.listBoards(db: db)
+        result = try BoardTools.listBoards(db: db)
     case "create_board":
-        return try BoardTools.createBoard(arguments: params.arguments, db: db)
+        result = try BoardTools.createBoard(arguments: params.arguments, db: db)
     case "delete_board":
-        return try BoardTools.deleteBoard(arguments: params.arguments, db: db)
+        result = try BoardTools.deleteBoard(arguments: params.arguments, db: db)
     case "list_columns":
-        return try ColumnTools.listColumns(arguments: params.arguments, db: db)
+        result = try ColumnTools.listColumns(arguments: params.arguments, db: db)
     case "create_column":
-        return try ColumnTools.createColumn(arguments: params.arguments, db: db)
+        result = try ColumnTools.createColumn(arguments: params.arguments, db: db)
     case "list_stories":
-        return try StoryTools.listStories(arguments: params.arguments, db: db)
+        result = try StoryTools.listStories(arguments: params.arguments, db: db)
     case "create_story":
-        return try StoryTools.createStory(arguments: params.arguments, db: db)
+        result = try StoryTools.createStory(arguments: params.arguments, db: db)
     case "update_story":
-        return try StoryTools.updateStory(arguments: params.arguments, db: db)
+        result = try StoryTools.updateStory(arguments: params.arguments, db: db)
     case "move_story":
-        return try StoryTools.moveStory(arguments: params.arguments, db: db)
+        result = try StoryTools.moveStory(arguments: params.arguments, db: db)
     case "delete_story":
-        return try StoryTools.deleteStory(arguments: params.arguments, db: db)
+        result = try StoryTools.deleteStory(arguments: params.arguments, db: db)
     default:
         return .init(content: [.text("Unknown tool: \(params.name)")], isError: true)
     }
+
+    if writingTools.contains(params.name) && result.isError != true {
+        CrossProcessNotifier.postDidChange()
+    }
+
+    return result
 }
