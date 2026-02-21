@@ -11,7 +11,6 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.4.1"),
-        .package(url: "https://github.com/groue/GRDBQuery.git", from: "0.9.0"),
         .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.9.2"),
     ],
     targets: [
@@ -19,14 +18,13 @@ let package = Package(
             name: "SprintManagerKit",
             dependencies: [
                 .product(name: "GRDB", package: "GRDB.swift"),
-                .product(name: "GRDBQuery", package: "GRDBQuery"),
             ]
         ),
         .executableTarget(
             name: "SprintManagerApp",
             dependencies: [
                 "SprintManagerKit",
-                .product(name: "GRDBQuery", package: "GRDBQuery"),
+                .product(name: "GRDB", package: "GRDB.swift"),
             ]
         ),
         .executableTarget(
